@@ -7,7 +7,7 @@ Install
 =======
 
 ```
-  go install github.com/andrix/gourl
+  go get github.com/andrix/gourl
 ```
 
 Run
