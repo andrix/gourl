@@ -5,9 +5,12 @@ import (
     "flag"
     "fmt"
     "io"
+    "net/url"
     "net/http"
     "crypto/tls"
     "strings"
+    "log"
+    "encoding/base64"
 )
 
 func main() {
@@ -15,18 +18,24 @@ func main() {
     var insecure = flag.Bool("k", false, "Allow to perform insecure SSL connections")
     var user_agent = flag.String("A", "gourl/1.0", "Set the User-Agent")
     var output = flag.String("o", "", "Write output to a file instead of Stdout")
+    var proxy = flag.String("x", "", "HTTP Proxy in the form HOST:PORT")
+    var proxy_user = flag.String("U", "", "Proxy user and password in the form USER:PASS")
 
     flag.Parse()
+    log.SetFlags(0)
     if len(flag.Args()) <= 0 {
         fmt.Printf("Usage: gourl [options] url\n")
     } else {
-        url := flag.Arg(0)
-        req, err := http.NewRequest("GET", url, nil)
+        aurl := flag.Arg(0)
+        req, err := http.NewRequest("GET", aurl, nil)
         if err != nil {
-            fmt.Printf("Error creating request: %s\n", err)
-            return
+            log.Fatalf("Error creating request: %s\n", err)
         }
         req.Header.Add("User-Agent", *user_agent)
+        if *proxy_user != "" {
+            authtoken := "Basic " + base64.StdEncoding.EncodeToString([]byte(*proxy_user))
+            req.Header.Add("Proxy-Authorization", authtoken)
+        }
 
         // Create TLS config
         tlsConfig := tls.Config{RootCAs: nil}
@@ -40,12 +49,21 @@ func main() {
             TLSClientConfig:    &tlsConfig,
             DisableCompression: true,
         }
+
+        // If -x/Proxy - set up HTTP proxy
+        if *proxy != "" {
+            proxyUrl, err := url.Parse("http://" + *proxy)
+            if err != nil {
+                panic(err)
+            }
+            tr.Proxy = http.ProxyURL(proxyUrl)
+        }
+
         client := &http.Client{Transport: tr}
         resp, err := client.Do(req)
 
         if err != nil {
-            fmt.Printf("An error ocurred: %s\n", err)
-            return
+            log.Fatalf("An error ocurred: %s\n", err)
         }
         if *headers {
             fmt.Printf("%s %s\n", resp.Proto, resp.Status)
@@ -61,8 +79,7 @@ func main() {
             } else {
                 out, err = os.Create(*output)
                 if err != nil {
-                    fmt.Printf("Error writing to file: %s\n", err)
-                    return
+                    log.Fatalf("Error writing to file: %s\n", err)
                 }
             }
             defer func() {
