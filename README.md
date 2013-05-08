@@ -27,6 +27,7 @@ Changelog
  - -o option implemented - write to file
  - -x option implemented - HTTP proxy support
  - -U option implemented - HTTP proxy basic auth
+ - -u option implemented - Provide credentials for Server Authentication
 
 0.1 - hello world!
  - lacks of all functionality

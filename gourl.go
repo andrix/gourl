@@ -20,6 +20,7 @@ func main() {
     var output = flag.String("o", "", "Write output to a file instead of Stdout")
     var proxy = flag.String("x", "", "HTTP Proxy in the form HOST:PORT")
     var proxy_user = flag.String("U", "", "Proxy user and password in the form USER:PASS")
+    var user_pass = flag.String("u", "", "User and password for server authentication")
 
     flag.Parse()
     log.SetFlags(0)
@@ -35,6 +36,10 @@ func main() {
         if *proxy_user != "" {
             authtoken := "Basic " + base64.StdEncoding.EncodeToString([]byte(*proxy_user))
             req.Header.Add("Proxy-Authorization", authtoken)
+        }
+        if *user_pass != "" {
+            uparr := strings.Split(*user_pass, ":")
+            req.SetBasicAuth(uparr[0], uparr[1])
         }
 
         // Create TLS config
