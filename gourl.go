@@ -1,9 +1,10 @@
 package main
 
 import (
+    "os"
     "flag"
     "fmt"
-    "io/ioutil"
+    "io"
     "net/http"
     "crypto/tls"
     "strings"
@@ -13,6 +14,7 @@ func main() {
     var headers = flag.Bool("I", false, "Print headers information")
     var insecure = flag.Bool("k", false, "Allow to perform insecure SSL connections")
     var user_agent = flag.String("A", "gourl/1.0", "Set the User-Agent")
+    var output = flag.String("o", "", "Write output to a file instead of Stdout")
 
     flag.Parse()
     if len(flag.Args()) <= 0 {
@@ -53,12 +55,34 @@ func main() {
             fmt.Println()
         } else {
             defer resp.Body.Close()
-            body, err := ioutil.ReadAll(resp.Body)
-            if err != nil {
-                fmt.Printf("An error ocurred: %s\n", err)
-                return
+            var out *os.File
+            if *output == "" {
+                out = os.Stdout
+            } else {
+                out, err = os.Create(*output)
+                if err != nil {
+                    fmt.Printf("Error writing to file: %s\n", err)
+                    return
+                }
             }
-            fmt.Printf("%s", body)
+            defer func() {
+                if err := out.Close(); err != nil {
+                    panic(err)
+                }
+            }()
+
+            // Create buffer
+            buf := make([]byte, 1024)
+
+            for {
+                n, err := resp.Body.Read(buf)
+                if err != nil && err != io.EOF { panic(err) }
+                if n == 0 { break }
+
+                if _, err := out.Write(buf[:n]); err != nil {
+                    panic(err)
+                }
+            }
         }
     }
 }

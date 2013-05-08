@@ -23,6 +23,7 @@ Changelog
 
 0.2 - SSL connections implemented \o/
  - -k option implemented - non-secure connetions allowed
+ - -o option implemented - write to file
 
 0.1 - hello world!
  - lacks of all functionality
