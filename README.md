@@ -21,6 +21,9 @@ If $GOBIN it's on the $PATH, then
 Changelog
 =========
 
+0.2 - SSL connections implemented \o/
+ - -k option implemented - non-secure connetions allowed
+
 0.1 - hello world!
  - lacks of all functionality
  - retrieve an url
