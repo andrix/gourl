@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+    "crypto/tls"
 	"strings"
 )
 
 func main() {
 	var headers = flag.Bool("I", false, "Print headers information")
+    var insecure = flag.Bool("k", false, "Allow to perform insecure SSL connections")
 	var user_agent = flag.String("A", "gourl/1.0", "Set the User-Agent")
 
 	flag.Parse()
@@ -24,7 +26,19 @@ func main() {
 		}
 		req.Header.Add("User-Agent", *user_agent)
 
-		client := &http.Client{}
+        // Create TLS config
+        tlsConfig := tls.Config{RootCAs: nil}
+
+        // If insecure, skip CA verfication
+        if *insecure {
+            tlsConfig.InsecureSkipVerify = true
+        }
+
+        tr := &http.Transport{
+            TLSClientConfig:    &tlsConfig,
+            DisableCompression: true,
+        }
+        client := &http.Client{Transport: tr}
 		resp, err := client.Do(req)
 
 		if err != nil {
